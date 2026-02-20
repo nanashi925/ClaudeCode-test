@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>OG Image Generator</title>
+<style>
+  body {
+    margin: 0;
+    background: #0a0a0f;
+    color: #e8e6e3;
+    font-family: -apple-system, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 20px;
+    min-height: 100vh;
+  }
+  h1 { font-size: 20px; margin-bottom: 8px; }
+  p { color: #9a96a6; font-size: 14px; margin-bottom: 24px; }
+  canvas {
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 12px;
+    max-width: 100%;
+    height: auto;
+  }
+  button {
+    margin-top: 20px;
+    padding: 12px 32px;
+    background: #d98f40;
+    color: #0a0a0f;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+  button:hover { opacity: 0.85; }
+  .note {
+    margin-top: 16px;
+    color: #5e5a6e;
+    font-size: 12px;
+    font-family: 'SF Mono', monospace;
+  }
+</style>
+</head>
+<body>
+
+<h1>OG Image Generator</h1>
+<p>og-image.png を生成してダウンロードします</p>
+<canvas id="canvas" width="1200" height="630"></canvas>
+<button onclick="download()">og-image.png をダウンロード</button>
+<p class="note">ダウンロード後、index.html と同じフォルダに配置してください</p>
+
+<script>
+const W = 1200, H = 630;
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+
+function draw() {
+  // Background
+  const bgGrad = ctx.createLinearGradient(0, 0, W, H);
+  bgGrad.addColorStop(0, '#0a0a0f');
+  bgGrad.addColorStop(1, '#0f1019');
+  ctx.fillStyle = bgGrad;
+  ctx.fillRect(0, 0, W, H);
+
+  // Subtle glow
+  const glowGrad = ctx.createRadialGradient(W * 0.2, H * 0.1, 0, W * 0.2, H * 0.1, W * 0.5);
+  glowGrad.addColorStop(0, 'rgba(217,143,64,0.06)');
+  glowGrad.addColorStop(1, 'transparent');
+  ctx.fillStyle = glowGrad;
+  ctx.fillRect(0, 0, W, H);
+
+  const glowGrad2 = ctx.createRadialGradient(W * 0.8, H * 0.9, 0, W * 0.8, H * 0.9, W * 0.4);
+  glowGrad2.addColorStop(0, 'rgba(91,141,239,0.04)');
+  glowGrad2.addColorStop(1, 'transparent');
+  ctx.fillStyle = glowGrad2;
+  ctx.fillRect(0, 0, W, H);
+
+  // Grid
+  ctx.strokeStyle = 'rgba(255,255,255,0.025)';
+  ctx.lineWidth = 0.5;
+  for (let x = 0; x <= W; x += 40) {
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+  }
+  for (let y = 0; y <= H; y += 40) {
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+  }
+
+  // Logo icon
+  roundRect(80, 160, 52, 52, 12, '#d98f40');
+  ctx.fillStyle = '#0a0a0f';
+  ctx.font = 'bold 22px "SF Mono","Fira Code",monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText('>_', 106, 194);
+
+  // Badge
+  roundRect(80, 240, 268, 30, 15, 'rgba(217,143,64,0.15)');
+  ctx.strokeStyle = 'rgba(217,143,64,0.3)';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+  ctx.fillStyle = '#d98f40';
+  ctx.beginPath(); ctx.arc(98, 255, 4, 0, Math.PI * 2); ctx.fill();
+  ctx.font = '12px "SF Mono","Fira Code",monospace';
+  ctx.textAlign = 'left';
+  ctx.fillStyle = '#d98f40';
+  ctx.fillText('Interactive Capabilities Guide', 112, 260);
+
+  // Title
+  ctx.font = 'bold 48px -apple-system,BlinkMacSystemFont,sans-serif';
+  const titleGrad = ctx.createLinearGradient(80, 300, 450, 300);
+  titleGrad.addColorStop(0, '#e8e6e3');
+  titleGrad.addColorStop(0.5, '#d98f40');
+  titleGrad.addColorStop(1, '#5b8def');
+  ctx.fillStyle = titleGrad;
+  ctx.fillText('Claude Code', 80, 320);
+
+  ctx.font = 'bold 42px -apple-system,BlinkMacSystemFont,sans-serif';
+  ctx.fillStyle = 'rgba(232,230,227,0.85)';
+  ctx.fillText('ガイド', 80, 370);
+
+  // Subtitle
+  ctx.font = '17px -apple-system,BlinkMacSystemFont,sans-serif';
+  ctx.fillStyle = '#9a96a6';
+  ctx.fillText('ターミナルで動くAIペアプログラマーの全力を引き出す', 80, 415);
+
+  // Tags
+  const tags = [
+    { text: 'Code', color: '#d98f40', bg: 'rgba(217,143,64,0.15)' },
+    { text: 'Git', color: '#5b8def', bg: 'rgba(91,141,239,0.12)' },
+    { text: 'Search', color: '#4ec9a0', bg: 'rgba(78,201,160,0.12)' },
+    { text: 'Agent', color: '#b48ead', bg: 'rgba(180,142,173,0.12)' },
+    { text: 'MCP', color: '#56b6c2', bg: 'rgba(86,182,194,0.12)' },
+  ];
+  let tx = 80;
+  tags.forEach(tag => {
+    ctx.font = '11px "SF Mono",monospace';
+    const tw = ctx.measureText(tag.text).width + 24;
+    roundRect(tx, 450, tw, 26, 13, tag.bg);
+    ctx.fillStyle = tag.color;
+    ctx.textAlign = 'center';
+    ctx.fillText(tag.text, tx + tw / 2, 468);
+    ctx.textAlign = 'left';
+    tx += tw + 10;
+  });
+
+  // Terminal mockup
+  drawTerminal(620, 130, 500, 370);
+
+  // Bottom accent line
+  const lineGrad = ctx.createLinearGradient(0, 0, W, 0);
+  lineGrad.addColorStop(0, '#e8e6e3');
+  lineGrad.addColorStop(0.5, '#d98f40');
+  lineGrad.addColorStop(1, '#5b8def');
+  ctx.globalAlpha = 0.6;
+  ctx.fillStyle = lineGrad;
+  ctx.fillRect(0, 624, W, 6);
+  ctx.globalAlpha = 1;
+
+  // Footer
+  ctx.font = '12px "SF Mono",monospace';
+  ctx.fillStyle = '#5e5a6e';
+  ctx.fillText('Powered by Claude Opus 4.6', 80, 560);
+  ctx.font = '12px -apple-system,sans-serif';
+  ctx.fillText('あなたの開発を加速させる', 80, 580);
+}
+
+function drawTerminal(x, y, w, h) {
+  // Shadow
+  ctx.shadowColor = 'rgba(0,0,0,0.5)';
+  ctx.shadowBlur = 32;
+  ctx.shadowOffsetY = 8;
+  roundRect(x, y, w, h, 16, '#1a1d2e');
+  ctx.shadowColor = 'transparent';
+  ctx.shadowBlur = 0;
+  ctx.shadowOffsetY = 0;
+
+  // Border
+  ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+  ctx.lineWidth = 1;
+  roundRectPath(x, y, w, h, 16);
+  ctx.stroke();
+
+  // Title bar
+  const barGrad = ctx.createLinearGradient(0, y, 0, y + 44);
+  barGrad.addColorStop(0, '#1e2130');
+  barGrad.addColorStop(1, '#161825');
+  roundRect(x, y, w, 44, 16, barGrad);
+  ctx.fillStyle = barGrad;
+  ctx.fillRect(x, y + 28, w, 16);
+
+  ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+  ctx.beginPath(); ctx.moveTo(x, y + 44); ctx.lineTo(x + w, y + 44); ctx.stroke();
+
+  // Dots
+  ctx.fillStyle = '#e06c75';
+  ctx.beginPath(); ctx.arc(x + 28, y + 22, 6, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#d98f40';
+  ctx.beginPath(); ctx.arc(x + 48, y + 22, 6, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#4ec9a0';
+  ctx.beginPath(); ctx.arc(x + 68, y + 22, 6, 0, Math.PI * 2); ctx.fill();
+
+  ctx.font = '11px "SF Mono",monospace';
+  ctx.fillStyle = '#5e5a6e';
+  ctx.textAlign = 'center';
+  ctx.fillText('claude — zsh', x + w / 2, y + 27);
+  ctx.textAlign = 'left';
+
+  // Content
+  const cx = x + 28;
+  let cy = y + 75;
+  const lh = 30;
+
+  ctx.font = '13px "SF Mono","Fira Code",monospace';
+  ctx.fillStyle = '#d98f40'; ctx.fillText('$', cx, cy);
+  ctx.fillStyle = '#e8e6e3'; ctx.fillText('claude', cx + 17, cy);
+
+  cy += lh;
+  ctx.font = '12px "SF Mono","Fira Code",monospace';
+  ctx.fillStyle = '#9a96a6'; ctx.fillText('Welcome to Claude Code! (Opus 4.6)', cx + 12, cy);
+
+  cy += lh + 5;
+  ctx.font = '13px "SF Mono","Fira Code",monospace';
+  ctx.fillStyle = '#d98f40'; ctx.fillText('>', cx, cy);
+  ctx.font = '13px -apple-system,sans-serif';
+  ctx.fillStyle = '#e8e6e3'; ctx.fillText('バグを修正して、テストも書いて', cx + 17, cy);
+
+  cy += lh + 2;
+  ctx.font = '12px "SF Mono","Fira Code",monospace';
+  ctx.fillStyle = '#4ec9a0'; ctx.fillText('✓ Bug fixed in src/auth.ts:42', cx + 12, cy);
+  cy += 24;
+  ctx.fillText('✓ Test added: auth.test.ts', cx + 12, cy);
+  cy += 24;
+  ctx.fillText('✓ All tests passing', cx + 12, cy);
+
+  cy += lh + 5;
+  ctx.font = '13px "SF Mono","Fira Code",monospace';
+  ctx.fillStyle = '#d98f40'; ctx.fillText('>', cx, cy);
+  ctx.font = '13px -apple-system,sans-serif';
+  ctx.fillStyle = '#e8e6e3'; ctx.fillText('この変更をコミットして', cx + 17, cy);
+
+  cy += lh + 2;
+  ctx.font = '12px "SF Mono","Fira Code",monospace';
+  ctx.fillStyle = '#4ec9a0'; ctx.fillText('✓ Committed: "fix: auth token validation"', cx + 12, cy);
+
+  cy += lh + 5;
+  ctx.fillStyle = '#d98f40';
+  ctx.font = '13px "SF Mono","Fira Code",monospace';
+  ctx.fillText('>', cx, cy);
+  ctx.globalAlpha = 0.8;
+  ctx.fillRect(cx + 14, cy - 13, 9, 17);
+  ctx.globalAlpha = 1;
+}
+
+function roundRect(x, y, w, h, r, fill) {
+  roundRectPath(x, y, w, h, r);
+  if (fill) {
+    ctx.fillStyle = fill;
+    ctx.fill();
+  }
+}
+
+function roundRectPath(x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+function download() {
+  const link = document.createElement('a');
+  link.download = 'og-image.png';
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+}
+
+draw();
+</script>
+
+</body>
+</html>
