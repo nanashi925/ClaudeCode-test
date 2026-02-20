@@ -1,0 +1,1723 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Claude Code ガイド — あなたの開発を変える</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Noto+Sans+JP:wght@300;400;500;700&display=swap');
+
+  :root {
+    --bg-deep: #0a0a0f;
+    --bg-primary: #0f1019;
+    --bg-secondary: #161825;
+    --bg-card: #1a1d2e;
+    --bg-card-hover: #1f2338;
+    --bg-glow: rgba(217, 143, 64, 0.04);
+    --border-subtle: rgba(255, 255, 255, 0.06);
+    --border-medium: rgba(255, 255, 255, 0.1);
+    --text-primary: #e8e6e3;
+    --text-secondary: #9a96a6;
+    --text-muted: #5e5a6e;
+    --accent-warm: #d98f40;
+    --accent-warm-soft: rgba(217, 143, 64, 0.15);
+    --accent-warm-glow: rgba(217, 143, 64, 0.3);
+    --accent-blue: #5b8def;
+    --accent-blue-soft: rgba(91, 141, 239, 0.12);
+    --accent-green: #4ec9a0;
+    --accent-green-soft: rgba(78, 201, 160, 0.12);
+    --accent-purple: #b48ead;
+    --accent-purple-soft: rgba(180, 142, 173, 0.12);
+    --accent-red: #e06c75;
+    --accent-red-soft: rgba(224, 108, 117, 0.12);
+    --accent-cyan: #56b6c2;
+    --accent-cyan-soft: rgba(86, 182, 194, 0.12);
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-xl: 24px;
+    --mono: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
+    --sans: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, sans-serif;
+    --shadow-card: 0 2px 16px rgba(0, 0, 0, 0.3), 0 0 1px rgba(255, 255, 255, 0.05);
+    --shadow-elevated: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 1px rgba(255, 255, 255, 0.08);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html {
+    scroll-behavior: smooth;
+    scrollbar-width: thin;
+    scrollbar-color: var(--accent-warm-soft) transparent;
+  }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg-deep);
+    color: var(--text-primary);
+    line-height: 1.7;
+    overflow-x: hidden;
+    min-height: 100vh;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background:
+      radial-gradient(ellipse 80% 60% at 20% 10%, rgba(217, 143, 64, 0.03) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 80% at 80% 90%, rgba(91, 141, 239, 0.02) 0%, transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  ::selection {
+    background: var(--accent-warm-soft);
+    color: var(--accent-warm);
+  }
+
+  /* ── Header ── */
+  .header {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    background: rgba(10, 10, 15, 0.85);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border-subtle);
+    transition: all 0.3s;
+  }
+
+  .header.scrolled {
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+  }
+
+  .header-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 12px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-family: var(--mono);
+    font-weight: 600;
+    font-size: 15px;
+    color: var(--text-primary);
+    text-decoration: none;
+  }
+
+  .logo-icon {
+    width: 32px;
+    height: 32px;
+    background: linear-gradient(135deg, var(--accent-warm) 0%, #e8a954 100%);
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    color: var(--bg-deep);
+    font-weight: 700;
+  }
+
+  .progress-section {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .progress-bar-container {
+    width: 120px;
+    height: 4px;
+    background: var(--border-subtle);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent-warm), #e8a954);
+    border-radius: 4px;
+    transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    width: 0%;
+  }
+
+  .progress-text {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
+  /* ── Nav ── */
+  .nav-pills {
+    display: flex;
+    gap: 4px;
+    padding: 6px;
+    background: var(--bg-secondary);
+    border-radius: var(--radius-md);
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .nav-pills::-webkit-scrollbar { display: none; }
+
+  .nav-pill {
+    padding: 6px 14px;
+    font-size: 12px;
+    font-family: var(--mono);
+    color: var(--text-muted);
+    background: transparent;
+    border: none;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s;
+  }
+
+  .nav-pill:hover {
+    color: var(--text-secondary);
+    background: var(--border-subtle);
+  }
+
+  .nav-pill.active {
+    color: var(--accent-warm);
+    background: var(--accent-warm-soft);
+  }
+
+  /* ── Hero ── */
+  .hero {
+    position: relative;
+    z-index: 1;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 140px 32px 80px;
+    text-align: center;
+  }
+
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 16px;
+    background: var(--accent-warm-soft);
+    border: 1px solid rgba(217, 143, 64, 0.2);
+    border-radius: 100px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--accent-warm);
+    margin-bottom: 24px;
+  }
+
+  .hero-badge .dot {
+    width: 6px;
+    height: 6px;
+    background: var(--accent-warm);
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  .hero h1 {
+    font-size: clamp(32px, 5vw, 56px);
+    font-weight: 700;
+    line-height: 1.2;
+    margin-bottom: 16px;
+    background: linear-gradient(135deg, var(--text-primary) 0%, var(--accent-warm) 50%, var(--accent-blue) 100%);
+    background-size: 200% 200%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: gradientShift 8s ease infinite;
+  }
+
+  @keyframes gradientShift {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+
+  .hero p {
+    font-size: 16px;
+    color: var(--text-secondary);
+    max-width: 600px;
+    margin: 0 auto 40px;
+    line-height: 1.8;
+  }
+
+  .hero-terminal {
+    max-width: 560px;
+    margin: 0 auto;
+    background: var(--bg-card);
+    border: 1px solid var(--border-medium);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-elevated);
+    text-align: left;
+  }
+
+  .terminal-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-subtle);
+  }
+
+  .terminal-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+  }
+  .terminal-dot.r { background: #e06c75; }
+  .terminal-dot.y { background: #d98f40; }
+  .terminal-dot.g { background: #4ec9a0; }
+
+  .terminal-title {
+    flex: 1;
+    text-align: center;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+
+  .terminal-body {
+    padding: 20px;
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 1.8;
+    min-height: 100px;
+  }
+
+  .terminal-line {
+    margin-bottom: 4px;
+  }
+
+  .terminal-prompt {
+    color: var(--accent-warm);
+  }
+
+  .terminal-cmd {
+    color: var(--text-primary);
+  }
+
+  .terminal-output {
+    color: var(--text-secondary);
+    padding-left: 1em;
+  }
+
+  .terminal-cursor {
+    display: inline-block;
+    width: 8px;
+    height: 16px;
+    background: var(--accent-warm);
+    vertical-align: text-bottom;
+    animation: blink 1s step-end infinite;
+  }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+  }
+
+  /* ── Main Content ── */
+  .main {
+    position: relative;
+    z-index: 1;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 32px 80px;
+  }
+
+  /* ── Section ── */
+  .section {
+    margin-bottom: 80px;
+    scroll-margin-top: 80px;
+  }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+
+  .section-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+  }
+
+  .section-title {
+    font-size: 24px;
+    font-weight: 700;
+  }
+
+  .section-subtitle {
+    font-size: 13px;
+    color: var(--text-muted);
+    font-family: var(--mono);
+  }
+
+  /* ── Cards ── */
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 16px;
+  }
+
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+  }
+
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--card-accent, var(--accent-warm)), transparent);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .card:hover {
+    background: var(--bg-card-hover);
+    border-color: var(--border-medium);
+    box-shadow: var(--shadow-card);
+    transform: translateY(-2px);
+  }
+
+  .card:hover::before {
+    opacity: 1;
+  }
+
+  .card-main {
+    padding: 24px;
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+  }
+
+  .card-emoji {
+    font-size: 24px;
+    line-height: 1;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .card-content { flex: 1; }
+
+  .card-title {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .card-toggle {
+    font-size: 12px;
+    color: var(--text-muted);
+    transition: transform 0.3s;
+  }
+
+  .card.open .card-toggle {
+    transform: rotate(180deg);
+  }
+
+  .card-desc {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+  }
+
+  .card-detail {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .card.open .card-detail {
+    max-height: 800px;
+  }
+
+  .card-detail-inner {
+    padding: 0 24px 24px;
+    border-top: 1px solid var(--border-subtle);
+    margin-top: 0;
+    padding-top: 16px;
+  }
+
+  .card-detail-inner h4 {
+    font-family: var(--mono);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+  }
+
+  .example-block {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-sm);
+    padding: 14px 16px;
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 1.7;
+    color: var(--accent-green);
+    margin-bottom: 12px;
+    position: relative;
+    overflow-x: auto;
+  }
+
+  .example-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+    font-family: var(--mono);
+  }
+
+  .example-block .prompt-prefix {
+    color: var(--accent-warm);
+    user-select: none;
+  }
+
+  .example-block .comment {
+    color: var(--text-muted);
+  }
+
+  .tip-box {
+    background: var(--accent-warm-soft);
+    border: 1px solid rgba(217, 143, 64, 0.15);
+    border-radius: var(--radius-sm);
+    padding: 12px 16px;
+    font-size: 12px;
+    color: var(--accent-warm);
+    margin-top: 12px;
+    line-height: 1.6;
+  }
+
+  .tip-box strong {
+    font-weight: 600;
+  }
+
+  /* ── Tags ── */
+  .tag {
+    display: inline-block;
+    padding: 3px 10px;
+    font-size: 11px;
+    font-family: var(--mono);
+    border-radius: 100px;
+    margin: 2px 4px 2px 0;
+  }
+
+  .tag-warm { background: var(--accent-warm-soft); color: var(--accent-warm); }
+  .tag-blue { background: var(--accent-blue-soft); color: var(--accent-blue); }
+  .tag-green { background: var(--accent-green-soft); color: var(--accent-green); }
+  .tag-purple { background: var(--accent-purple-soft); color: var(--accent-purple); }
+  .tag-red { background: var(--accent-red-soft); color: var(--accent-red); }
+  .tag-cyan { background: var(--accent-cyan-soft); color: var(--accent-cyan); }
+
+  /* ── Mastery Section ── */
+  .mastery-track {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 12px;
+  }
+
+  .mastery-item {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 20px;
+    cursor: pointer;
+    transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .mastery-item::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--accent-warm);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.4s;
+  }
+
+  .mastery-item.checked::after {
+    transform: scaleX(1);
+  }
+
+  .mastery-item.checked {
+    border-color: var(--accent-warm-soft);
+    background: rgba(217, 143, 64, 0.04);
+  }
+
+  .mastery-item:hover {
+    background: var(--bg-card-hover);
+  }
+
+  .mastery-check {
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--border-medium);
+    border-radius: 50%;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    transition: all 0.3s;
+  }
+
+  .mastery-item.checked .mastery-check {
+    border-color: var(--accent-warm);
+    background: var(--accent-warm);
+    color: var(--bg-deep);
+  }
+
+  .mastery-label {
+    font-size: 13px;
+    font-weight: 500;
+    margin-bottom: 4px;
+  }
+
+  .mastery-desc {
+    font-size: 11px;
+    color: var(--text-muted);
+    line-height: 1.5;
+  }
+
+  /* ── Quick Ref Table ── */
+  .ref-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .ref-table th {
+    text-align: left;
+    font-family: var(--mono);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-muted);
+    padding: 8px 16px;
+    border-bottom: 1px solid var(--border-medium);
+  }
+
+  .ref-table td {
+    padding: 12px 16px;
+    font-size: 13px;
+    border-bottom: 1px solid var(--border-subtle);
+    vertical-align: top;
+  }
+
+  .ref-table tr:hover td {
+    background: var(--bg-card);
+  }
+
+  .ref-cmd {
+    font-family: var(--mono);
+    color: var(--accent-warm);
+    font-size: 12px;
+    white-space: nowrap;
+  }
+
+  /* ── Footer ── */
+  .footer {
+    position: relative;
+    z-index: 1;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 40px 32px;
+    border-top: 1px solid var(--border-subtle);
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 13px;
+  }
+
+  .footer a {
+    color: var(--accent-warm);
+    text-decoration: none;
+  }
+
+  .footer a:hover {
+    text-decoration: underline;
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 768px) {
+    .header-inner {
+      padding: 10px 16px;
+    }
+    .nav-pills {
+      display: none;
+    }
+    .hero {
+      padding: 110px 16px 60px;
+    }
+    .main {
+      padding: 0 16px 60px;
+    }
+    .card-grid {
+      grid-template-columns: 1fr;
+    }
+    .mastery-track {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .mastery-track {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  /* ── Animations ── */
+  .fade-in {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.6s, transform 0.6s;
+  }
+
+  .fade-in.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+</style>
+</head>
+<body>
+
+<!-- ── Header ── -->
+<header class="header" id="header">
+  <div class="header-inner">
+    <a href="#" class="logo">
+      <div class="logo-icon">&gt;_</div>
+      <span>Claude Code Guide</span>
+    </a>
+    <nav class="nav-pills" id="nav">
+      <button class="nav-pill active" data-target="hero-section">Home</button>
+      <button class="nav-pill" data-target="sec-code">Code</button>
+      <button class="nav-pill" data-target="sec-file">File</button>
+      <button class="nav-pill" data-target="sec-git">Git</button>
+      <button class="nav-pill" data-target="sec-search">Search</button>
+      <button class="nav-pill" data-target="sec-agent">Agent</button>
+      <button class="nav-pill" data-target="sec-slash">Commands</button>
+      <button class="nav-pill" data-target="sec-tips">Tips</button>
+      <button class="nav-pill" data-target="sec-mastery">Mastery</button>
+    </nav>
+    <div class="progress-section">
+      <div class="progress-bar-container">
+        <div class="progress-bar-fill" id="progressBar"></div>
+      </div>
+      <span class="progress-text" id="progressText">0%</span>
+    </div>
+  </div>
+</header>
+
+<!-- ── Hero ── -->
+<section class="hero" id="hero-section">
+  <div class="hero-badge">
+    <span class="dot"></span>
+    Claude Max 5x で最大限に活用しよう
+  </div>
+  <h1>Claude Code で<br>開発を加速させる</h1>
+  <p>
+    ターミナルの中で動くAIペアプログラマー。コードの作成、デバッグ、
+    Git操作、ファイル管理まで — すべてを自然な日本語で。<br>
+    このガイドで、あなたの新しい相棒の全力を引き出そう。
+  </p>
+  <div class="hero-terminal">
+    <div class="terminal-bar">
+      <div class="terminal-dot r"></div>
+      <div class="terminal-dot y"></div>
+      <div class="terminal-dot g"></div>
+      <span class="terminal-title">claude — zsh</span>
+    </div>
+    <div class="terminal-body" id="heroTerminal">
+      <div class="terminal-line">
+        <span class="terminal-prompt">$ </span>
+        <span class="terminal-cmd" id="typewriter"></span>
+        <span class="terminal-cursor" id="cursor"></span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Main ── -->
+<main class="main">
+
+  <!-- Section: Code -->
+  <section class="section fade-in" id="sec-code">
+    <div class="section-header">
+      <div class="section-icon" style="background: var(--accent-warm-soft); color: var(--accent-warm);">&#9998;</div>
+      <div>
+        <h2 class="section-title">コーディング支援</h2>
+        <p class="section-subtitle">// writing, editing, debugging</p>
+      </div>
+    </div>
+    <div class="card-grid">
+
+      <div class="card" style="--card-accent: var(--accent-warm);" onclick="toggleCard(this)">
+        <div class="card-main">
+          <span class="card-emoji">&#128187;</span>
+          <div class="card-content">
+            <div class="card-title">コードを書く <span class="card-toggle">&#9660;</span></div>
+            <div class="card-desc">「○○な機能を作って」と伝えるだけ。関数、クラス、API、コンポーネント — 何でも生成します。</div>
+          </div>
+        </div>
+        <div class="card-detail">
+          <div class="card-detail-inner">
+            <h4>使い方の例</h4>
+            <div class="example-block">
+              <span class="prompt-prefix">あなた: </span>Express で JWT 認証のミドルウェアを作って<br>
+              <span class="comment">→ ファイルの作成・既存コードへの統合まで自動で行います</span>
+            </div>
+            <div class="example-block">
+              <span class="prompt-prefix">あなた: </span>このAPIにページネーション機能を追加して<br>
+              <span class="comment">→ 既存のコードを読んでから、最適な方法で追加します</span>
+            </div>
+            <div class="tip-box">
+              <strong>Tip:</strong> 具体的な要件を伝えるほど、正確なコードが生成されます。技術スタックやライブラリの指定も効果的。
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="--card-accent: var(--accent-blue);" onclick="toggleCard(this)">
+        <div class="card-main">
+          <span class="card-emoji">&#128027;</span>
+          <div class="card-content">
+            <div class="card-title">デバッグ <span class="card-toggle">&#9660;</span></div>
+            <div class="card-desc">エラーメッセージを貼り付けるだけ。原因を特定し、修正を提案・実行します。</div>
+          </div>
+        </div>
+        <div class="card-detail">
+          <div class="card-detail-inner">
+            <h4>使い方の例</h4>
+            <div class="example-block">
+              <span class="prompt-prefix">あなた: </span>このエラーを直して：TypeError: Cannot read property 'map' of undefined<br>
+              <span class="comment">→ コードベースを調査し、根本原因を特定して修正します</span>
+            </div>
+            <div class="example-block">
+              <span class="prompt-prefix">あなた: </span>テストが落ちてる原因を調べて<br>
+              <span class="comment">→ テストを実行し、失敗の原因を分析します</span>
+            </div>
+            <div class="tip-box">
+              <strong>Tip:</strong> エラーメッセージと一緒に、何をしようとしていたかも伝えると、より的確な修正ができます。
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="--card-accent: var(--accent-green);" onclick="toggleCard(this)">
+        <div class="card-main">
+          <span class="card-emoji">&#128260;</span>
+          <div class="card-content">
+            <div class="card-title">リファクタリング <span class="card-toggle">&#9660;</span></div>
+            <div class="card-desc">コードの品質向上。命名の改善、関数の分割、設計パターンの適用など。</div>
+          </div>
+        </div>
+        <div class="card-detail">
+          <div class="card-detail-inner">
+            <h4>使い方の例</h4>
+            <div class="example-block">
+              <span class="prompt-prefix">あなた: </span>この関数を小さな関数に分割して<br>
+              <span class="comment">→ 責務を分析し、適切に分割します</span>
+            </div>
+            <div class="example-block">
+              <span class="prompt-prefix">あなた: </span>このクラスの変数名をもっと分かりやすくして<br>
+              <span class="comment">→ 文脈を理解し、プロジェクト全体で一貫性のある命名に変更します</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="--card-accent: var(--accent-purple);" onclick="toggleCard(this)">
+        <div class="card-main">
+          <span class="card-emoji">&#128218;</span>
+          <div class="card-content">
+            <div class="card-title">コードの解説 <span class="card-toggle">&#9660;</span></div>
+            <div class="card-desc">初めてのプロジェクトでも大丈夫。どんなコードでも日本語で丁寧に説明します。</div>
+          </div>
+        </div>
+        <div class="card-detail">
+          <div class="card-detail-inner">
+            <h4>使い方の例</h4>
+            <div class="example-block">
+              <span class="prompt-prefix">あなた: </span>このプロジェクトの全体構造を教えて<br>
+              <span class="comment">→ ディレクトリ構成やアーキテクチャを分析して説明します</span>
+            </div>
+            <div class="example-block">
+              <span class="prompt-prefix">あなた: </span>この正規表現が何をしているか教えて<br>
+              <span class="comment">→ パターンを分解して、一つずつ説明します</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Section: File Operations -->
+  <section class="section fade-in" id="sec-file">
+    <div class="section-header">
+      <div class="section-icon" style="background: var(--accent-blue-soft); color: var(--accent-blue);">&#128193;</div>
+      <div>
+        <h2 class="section-title">ファイル操作</h2>
+        <p class="section-subtitle">// read, write, edit, search</p>
+      </div>
+    </div>
+    <div class="card-grid">
+
+      <div class="card" style="--card-accent: var(--accent-blue);" onclick="toggleCard(this)">
+        <div class="card-main">
+          <span class="card-emoji">&#128196;</span>
+          <div class="card-content">
+            <div class="card-title">ファイルの読み書き <span class="card-toggle">&#9660;</span></div>
+            <div class="card-desc">ファイルの閲覧、作成、編集。複数ファイルの同時操作も自在。</div>
+          </div>
+        </div>
+        <div class="card-detail">
+          <div class="card-detail-inner">
+            <h4>できること</h4>
+            <div style="margin-bottom: 12px;">
+              <span class="tag tag-blue">Read</span>
+              <span class="tag tag-green">Write</span>
+              <span class="tag tag-warm">Edit</span>
+              <span class="tag tag-purple">Glob</span>
+              <span class="tag tag-cyan">Grep</span>
+            </div>
+            <div class="example-block">
+              <span class="prompt-prefix">あなた: </span>src/config.ts を見せて<br>
+              <span class="prompt-prefix">あなた: </span>新しいファイル utils/helpers.ts を作って<br>
+              <span class="prompt-prefix">あなた: </span>README.md の「Installation」セクションを更新して
+            </div>
+            <div class="tip-box">
+              <strong>Tip:</strong> 「○○のファイルを探して」と言えば、ファイル名やコード内容からプロジェクト全体を検索します。
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="--card-accent: var(--accent-cyan);" onclick="toggleCard(this)">
+        <div class="card-main">
+          <span class="card-emoji">&#128270;</span>
+          <div class="card-content">
+            <div class="card-title">コードベース検索 <span class="card-toggle">&#9660;</span></div>
+            <div class="card-desc">ファイル名のパターン検索、コード内のテキスト検索。巨大なプロジェクトでも瞬時に。</div>
+          </div>
+        </div>
+        <div class="card-detail">
+          <div class="card-detail-inner">
+            <h4>使い方の例</h4>
+            <div class="example-block">
+              <span class="prompt-prefix">あなた: </span>「handleSubmit」が使われている場所を全部見せて<br>
+              <span class="comment">→ Grep でプロジェクト全体を検索します</span>
+            </div>
+            <div class="example-block">
+              <span class="prompt-prefix">あなた: </span>テスト用のファイルを全部リストして<br>
+              <span class="comment">→ Glob で **/*.test.ts のようなパターンで検索します</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="--card-accent: var(--accent-green);" onclick="toggleCard(this)">
+        <div class="card-main">
+          <span class="card-emoji">&#127968;</span>
+          <div class="card-content">
+            <div class="card-title">ターミナル操作 <span class="card-toggle">&#9660;</span></div>
+            <div class="card-desc">シェルコマンドの実行。ビルド、テスト、パッケージ管理、サーバー起動 — すべてここから。</div>
+          </div>
+        </div>
+        <div class="card-detail">
+          <div class="card-detail-inner">
+            <h4>使い方の例</h4>
+            <div class="example-block">
+              <span class="prompt-prefix">あなた: </span>npm install して依存関係を入れて<br>
+              <span class="prompt-prefix">あなた: </span>テストを実行して結果を教えて<br>
+              <span class="prompt-prefix">あなた: </span>Docker コンテナを起動して
+            </div>
+            <div class="tip-box">
+              <strong>Tip:</strong> 危険な操作（ファイル削除、force pushなど）の前には必ず確認を取ります。安心して任せてください。
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="--card-accent: var(--accent-purple);" onclick="toggleCard(this)">
+        <div class="card-main">
+          <span class="card-emoji">&#128248;</span>
+          <div class="card-content">
+            <div class="card-title">画像・PDF・Notebookの読み取り <span class="card-toggle">&#9660;</span></div>
+            <div class="card-desc">スクリーンショット、PDF、Jupyter Notebookの中身も理解できます。</div>
+          </div>
+        </div>
+        <div class="card-detail">
+          <div class="card-detail-inner">
+            <h4>使い方の例</h4>
+            <div class="example-block">
+              <span class="prompt-prefix">あなた: </span>このスクリーンショットのUIを再現するコードを書いて<br>
+              <span class="prompt-prefix">あなた: </span>この PDF の仕様書を読んで実装して<br>
+              <span class="prompt-prefix">あなた: </span>この Notebook のセルを修正して
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Section: Git & GitHub -->
+  <section class="section fade-in" id="sec-git">
+    <div class="section-header">
+      <div class="section-icon" style="background: var(--accent-green-soft); color: var(--accent-green);">&#128220;</div>
+      <div>
+        <h2 class="section-title">Git & GitHub</h2>
+        <p class="section-subtitle">// commit, push, PR, issues</p>
+      </div>
+    </div>
+    <div class="card-grid">
+
+      <div class="card" style="--card-accent: var(--accent-green);" onclick="toggleCard(this)">
+        <div class="card-main">
+          <span class="card-emoji">&#128230;</span>
+          <div class="card-content">
+            <div class="card-title">コミット & プッシュ <span class="card-toggle">&#9660;</span></div>
+            <div class="card-desc">変更内容を分析して適切なコミットメッセージを自動生成。ブランチ操作も。</div>
+          </div>
+        </div>
+        <div class="card-detail">
+          <div class="card-detail-inner">
+            <h4>使い方の例</h4>
+            <div class="example-block">
+              <span class="prompt-prefix">あなた: </span>変更をコミットして<br>
+              <span class="comment">→ diff を分析し、適切なコミットメッセージを作成します</span>
+            </div>
+            <div class="example-block">
+              <span class="prompt-prefix">あなた: </span>新しいブランチ feature/auth を作って<br>
+              <span class="prompt-prefix">あなた: </span>リモートにプッシュして
+            </div>
+            <div class="tip-box">
+              <strong>Tip:</strong> <code>/commit</code> スラッシュコマンドで、変更のステージングからコミットまで一発で行えます。
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="--card-accent: var(--accent-blue);" onclick="toggleCard(this)">
+        <div class="card-main">
+          <span class="card-emoji">&#128256;</span>
+          <div class="card-content">
+            <div class="card-title">プルリクエスト <span class="card-toggle">&#9660;</span></div>
+            <div class="card-desc">PRの作成、レビュー、コメントの確認。GitHub CLI(gh)を駆使。</div>
+          </div>
+        </div>
+        <div class="card-detail">
+          <div class="card-detail-inner">
+            <h4>使い方の例</h4>
+            <div class="example-block">
+              <span class="prompt-prefix">あなた: </span>今の変更でPRを作って<br>
+              <span class="comment">→ 全コミットを分析し、タイトル・説明を自動生成します</span>
+            </div>
+            <div class="example-block">
+              <span class="prompt-prefix">あなた: </span>PR #42 のレビューコメントを確認して対応して<br>
+              <span class="comment">→ コメントを取得し、修正を実行します</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="--card-accent: var(--accent-red);" onclick="toggleCard(this)">
+        <div class="card-main">
+          <span class="card-emoji">&#128680;</span>
+          <div class="card-content">
+            <div class="card-title">Issue & プロジェクト管理 <span class="card-toggle">&#9660;</span></div>
+            <div class="card-desc">GitHub Issues の確認・作成、ラベル管理、Issue起点の実装まで。</div>
+          </div>
+        </div>
+        <div class="card-detail">
+          <div class="card-detail-inner">
+            <h4>使い方の例</h4>
+            <div class="example-block">
+              <span class="prompt-prefix">あなた: </span>Issue #15 の内容を確認して、そのバグを修正して<br>
+              <span class="comment">→ Issue を読み、関連コードを調査し、修正を実装します</span>
+            </div>
+            <div class="example-block">
+              <span class="prompt-prefix">あなた: </span>「ダークモード対応」のIssueを作って<br>
+              <span class="comment">→ gh issue create で新しいIssueを作成します</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Section: Search & Research -->
+  <section class="section fade-in" id="sec-search">
+    <div class="section-header">
+      <div class="section-icon" style="background: var(--accent-cyan-soft); color: var(--accent-cyan);">&#127758;</div>
+      <div>
+        <h2 class="section-title">検索 & リサーチ</h2>
+        <p class="section-subtitle">// web search, documentation, APIs</p>
+      </div>
+    </div>
+    <div class="card-grid">
+
+      <div class="card" style="--card-accent: var(--accent-cyan);" onclick="toggleCard(this)">
+        <div class="card-main">
+          <span class="card-emoji">&#127760;</span>
+          <div class="card-content">
+            <div class="card-title">Web検索 <span class="card-toggle">&#9660;</span></div>
+            <div class="card-desc">最新のドキュメント、ライブラリの使い方、エラーの解決方法をリアルタイムで検索。</div>
+          </div>
+        </div>
+        <div class="card-detail">
+          <div class="card-detail-inner">
+            <h4>使い方の例</h4>
+            <div class="example-block">
+              <span class="prompt-prefix">あなた: </span>Next.js 15 の App Router の最新の書き方を調べて<br>
+              <span class="comment">→ Web検索で最新ドキュメントを取得します</span>
+            </div>
+            <div class="tip-box">
+              <strong>Tip:</strong> 私の知識は2025年5月まで。それ以降の情報は自動的にWeb検索で補完します。
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="--card-accent: var(--accent-purple);" onclick="toggleCard(this)">
+        <div class="card-main">
+          <span class="card-emoji">&#128214;</span>
+          <div class="card-content">
+            <div class="card-title">Webページ取得 <span class="card-toggle">&#9660;</span></div>
+            <div class="card-desc">URLを渡すと、そのページの内容を取得して分析します。ドキュメントの参照に便利。</div>
+          </div>
+        </div>
+        <div class="card-detail">
+          <div class="card-detail-inner">
+            <h4>使い方の例</h4>
+            <div class="example-block">
+              <span class="prompt-prefix">あなた: </span>https://docs.example.com/api を見て、この API の使い方を教えて<br>
+              <span class="comment">→ ページを取得し、内容を分析して説明します</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Section: Agent & Multi-task -->
+  <section class="section fade-in" id="sec-agent">
+    <div class="section-header">
+      <div class="section-icon" style="background: var(--accent-purple-soft); color: var(--accent-purple);">&#129302;</div>
+      <div>
+        <h2 class="section-title">エージェント & マルチタスク</h2>
+        <p class="section-subtitle">// parallel agents, autonomous work</p>
+      </div>
+    </div>
+    <div class="card-grid">
+
+      <div class="card" style="--card-accent: var(--accent-purple);" onclick="toggleCard(this)">
+        <div class="card-main">
+          <span class="card-emoji">&#128101;</span>
+          <div class="card-content">
+            <div class="card-title">サブエージェント <span class="card-toggle">&#9660;</span></div>
+            <div class="card-desc">複雑なタスクを複数のエージェントに分割して並列処理。高速に調査・実装を進めます。</div>
+          </div>
+        </div>
+        <div class="card-detail">
+          <div class="card-detail-inner">
+            <h4>仕組み</h4>
+            <div style="margin-bottom: 12px;">
+              <span class="tag tag-purple">Explore Agent</span>
+              <span class="tag tag-blue">Plan Agent</span>
+              <span class="tag tag-green">Bash Agent</span>
+              <span class="tag tag-warm">General Agent</span>
+            </div>
+            <div class="example-block">
+              <span class="comment">// 複雑な依頼をすると自動的にエージェントが分担</span><br>
+              <span class="prompt-prefix">あなた: </span>このプロジェクトの認証周りのコードを全部調べて、改善点をまとめて<br>
+              <span class="comment">→ 探索エージェントがコードベースを並列調査します</span>
+            </div>
+            <div class="tip-box">
+              <strong>Tip:</strong> 大規模な調査や複数ファイルにまたがる変更では、自動的にエージェントを活用して効率的に作業します。
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="--card-accent: var(--accent-warm);" onclick="toggleCard(this)">
+        <div class="card-main">
+          <span class="card-emoji">&#128203;</span>
+          <div class="card-content">
+            <div class="card-title">タスク管理 & 計画 <span class="card-toggle">&#9660;</span></div>
+            <div class="card-desc">複雑なタスクを自動的にTodoリストに分解。進捗を可視化しながら実行します。</div>
+          </div>
+        </div>
+        <div class="card-detail">
+          <div class="card-detail-inner">
+            <h4>自動的に行うこと</h4>
+            <div class="example-block">
+              <span class="comment">// 複雑なタスクを依頼すると…</span><br>
+              &#9745; データベースモデルの作成<br>
+              &#9745; APIエンドポイントの実装<br>
+              &#9634; フロントエンドの接続<br>
+              &#9634; テストの作成<br>
+              <span class="comment">// → 自動的にリスト化して、一つずつ完了させます</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="--card-accent: var(--accent-cyan);" onclick="toggleCard(this)">
+        <div class="card-main">
+          <span class="card-emoji">&#128736;</span>
+          <div class="card-content">
+            <div class="card-title">MCP サーバー連携 <span class="card-toggle">&#9660;</span></div>
+            <div class="card-desc">外部ツールやサービスとの連携。Slack、データベース、各種APIと接続可能。</div>
+          </div>
+        </div>
+        <div class="card-detail">
+          <div class="card-detail-inner">
+            <h4>MCPとは</h4>
+            <div class="example-block">
+              <span class="comment">// Model Context Protocol</span><br>
+              <span class="comment">// 外部ツールをClaude Codeに接続するプロトコル</span><br><br>
+              <span class="comment">// 例：Slack MCP → Slackメッセージの送受信</span><br>
+              <span class="comment">// 例：DB MCP → データベースの直接操作</span><br>
+              <span class="comment">// 例：Figma MCP → デザインデータの取得</span>
+            </div>
+            <div class="tip-box">
+              <strong>Tip:</strong> <code>~/.claude/settings.json</code> でMCPサーバーを設定できます。
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Section: Slash Commands -->
+  <section class="section fade-in" id="sec-slash">
+    <div class="section-header">
+      <div class="section-icon" style="background: var(--accent-red-soft); color: var(--accent-red);">&#9889;</div>
+      <div>
+        <h2 class="section-title">スラッシュコマンド & ショートカット</h2>
+        <p class="section-subtitle">// quick actions at your fingertips</p>
+      </div>
+    </div>
+
+    <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-lg); overflow: hidden;">
+      <table class="ref-table">
+        <thead>
+          <tr>
+            <th>コマンド</th>
+            <th>説明</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="ref-cmd">/help</span></td>
+            <td>ヘルプとドキュメントを表示</td>
+          </tr>
+          <tr>
+            <td><span class="ref-cmd">/clear</span></td>
+            <td>会話をクリアしてリセット（コンテキストウィンドウの節約に）</td>
+          </tr>
+          <tr>
+            <td><span class="ref-cmd">/compact</span></td>
+            <td>会話を要約して圧縮（長い会話の途中で使うと効果的）</td>
+          </tr>
+          <tr>
+            <td><span class="ref-cmd">/commit</span></td>
+            <td>変更のステージング→コミットメッセージ生成→コミットを一発で</td>
+          </tr>
+          <tr>
+            <td><span class="ref-cmd">/review-pr</span></td>
+            <td>プルリクエストのコードレビュー</td>
+          </tr>
+          <tr>
+            <td><span class="ref-cmd">/fast</span></td>
+            <td>高速モードの切り替え（同じOpusモデルで出力速度アップ）</td>
+          </tr>
+          <tr>
+            <td><span class="ref-cmd">Shift+Tab</span></td>
+            <td>プランモードの切り替え（実装前に計画を立てる）</td>
+          </tr>
+          <tr>
+            <td><span class="ref-cmd">Esc</span></td>
+            <td>現在の生成を中断</td>
+          </tr>
+          <tr>
+            <td><span class="ref-cmd">\</span></td>
+            <td>改行を入力（Enterで送信、\で改行）</td>
+          </tr>
+          <tr>
+            <td><span class="ref-cmd">@ファイル名</span></td>
+            <td>特定のファイルをコンテキストに追加</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Section: Tips & Best Practices -->
+  <section class="section fade-in" id="sec-tips">
+    <div class="section-header">
+      <div class="section-icon" style="background: var(--accent-warm-soft); color: var(--accent-warm);">&#128161;</div>
+      <div>
+        <h2 class="section-title">使いこなしのコツ</h2>
+        <p class="section-subtitle">// maximize your Claude Max 5x plan</p>
+      </div>
+    </div>
+    <div class="card-grid">
+
+      <div class="card" style="--card-accent: var(--accent-warm);" onclick="toggleCard(this)">
+        <div class="card-main">
+          <span class="card-emoji">&#128221;</span>
+          <div class="card-content">
+            <div class="card-title">CLAUDE.md を使う <span class="card-toggle">&#9660;</span></div>
+            <div class="card-desc">プロジェクトのルートにCLAUDE.mdを置くと、毎回読み込まれる「永続的な指示書」になります。</div>
+          </div>
+        </div>
+        <div class="card-detail">
+          <div class="card-detail-inner">
+            <h4>CLAUDE.md の例</h4>
+            <div class="example-block">
+              <span class="comment"># CLAUDE.md</span><br><br>
+              <span class="comment">## プロジェクト概要</span><br>
+              このプロジェクトは React + TypeScript の SPA です。<br><br>
+              <span class="comment">## コーディング規約</span><br>
+              - 関数コンポーネントのみ使用<br>
+              - CSS Modules を使用<br>
+              - テストは Vitest で書く<br><br>
+              <span class="comment">## よく使うコマンド</span><br>
+              - テスト: npm test<br>
+              - ビルド: npm run build
+            </div>
+            <div class="tip-box">
+              <strong>Tip:</strong> プロジェクト固有のルールや規約を書いておくと、私が一貫性のあるコードを書けるようになります。
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="--card-accent: var(--accent-blue);" onclick="toggleCard(this)">
+        <div class="card-main">
+          <span class="card-emoji">&#127919;</span>
+          <div class="card-content">
+            <div class="card-title">効果的なプロンプト <span class="card-toggle">&#9660;</span></div>
+            <div class="card-desc">曖昧な指示より、具体的な指示。コンテキストを与えるほど良い結果が返ります。</div>
+          </div>
+        </div>
+        <div class="card-detail">
+          <div class="card-detail-inner">
+            <h4>良いプロンプトの例</h4>
+            <div class="example-label">&#10060; 曖昧</div>
+            <div class="example-block">
+              <span class="prompt-prefix">あなた: </span>ログイン機能を作って
+            </div>
+            <div class="example-label">&#9989; 具体的</div>
+            <div class="example-block">
+              <span class="prompt-prefix">あなた: </span>Express + Prisma で、メール/パスワードのログインAPIを作って。<br>
+              JWTトークンを返して、refreshトークンもDBに保存する仕組みにして。<br>
+              バリデーションは zod を使って。
+            </div>
+            <div class="tip-box">
+              <strong>Tip:</strong> 「技術スタック」「要件」「制約」の3つを伝えるだけで、出力品質が大幅に向上します。
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="--card-accent: var(--accent-green);" onclick="toggleCard(this)">
+        <div class="card-main">
+          <span class="card-emoji">&#9851;</span>
+          <div class="card-content">
+            <div class="card-title">コンテキスト管理 <span class="card-toggle">&#9660;</span></div>
+            <div class="card-desc">長い会話はコンテキストウィンドウを消費。/compact と /clear を使い分けよう。</div>
+          </div>
+        </div>
+        <div class="card-detail">
+          <div class="card-detail-inner">
+            <h4>使い分けガイド</h4>
+            <div class="example-block">
+              <span class="comment">// 同じテーマで長く作業中 → /compact</span><br>
+              <span class="comment">// 会話を要約して圧縮、作業を継続できる</span><br><br>
+              <span class="comment">// 全く新しいタスクに移る → /clear</span><br>
+              <span class="comment">// クリーンな状態で新しい会話を開始</span>
+            </div>
+            <div class="tip-box">
+              <strong>Tip:</strong> 5x プランなら大量のやり取りが可能ですが、長い会話より短く具体的なセッションの方が効率的です。
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="--card-accent: var(--accent-purple);" onclick="toggleCard(this)">
+        <div class="card-main">
+          <span class="card-emoji">&#128170;</span>
+          <div class="card-content">
+            <div class="card-title">権限モードの活用 <span class="card-toggle">&#9660;</span></div>
+            <div class="card-desc">安全性と効率性のバランス。許可設定を理解して最適化しよう。</div>
+          </div>
+        </div>
+        <div class="card-detail">
+          <div class="card-detail-inner">
+            <h4>権限について</h4>
+            <div class="example-block">
+              <span class="comment">// ファイルの読み取り → 自動的に許可</span><br>
+              <span class="comment">// ファイルの編集 → 設定次第で確認あり</span><br>
+              <span class="comment">// コマンド実行 → 安全なものは自動、危険なものは確認</span><br>
+              <span class="comment">// git push → 毎回確認（安全のため）</span>
+            </div>
+            <div class="tip-box">
+              <strong>Tip:</strong> 信頼できるプロジェクトでは権限設定を緩和して、よりスムーズに作業できます。
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Section: Mastery Checklist -->
+  <section class="section fade-in" id="sec-mastery">
+    <div class="section-header">
+      <div class="section-icon" style="background: var(--accent-warm-soft); color: var(--accent-warm);">&#127942;</div>
+      <div>
+        <h2 class="section-title">マスタリーチェックリスト</h2>
+        <p class="section-subtitle">// track your Claude Code journey</p>
+      </div>
+    </div>
+    <p style="color: var(--text-secondary); margin-bottom: 24px; font-size: 14px;">
+      実際に試してみよう。クリックしてチェックをつけていこう（進捗はブラウザに保存されます）。
+    </p>
+    <div class="mastery-track" id="masteryTrack">
+      <div class="mastery-item" onclick="toggleMastery(this, 0)">
+        <div class="mastery-check"></div>
+        <div class="mastery-label">コードを書いてもらう</div>
+        <div class="mastery-desc">関数やコンポーネントの生成を依頼</div>
+      </div>
+      <div class="mastery-item" onclick="toggleMastery(this, 1)">
+        <div class="mastery-check"></div>
+        <div class="mastery-label">バグを修正してもらう</div>
+        <div class="mastery-desc">エラーメッセージを渡してデバッグ</div>
+      </div>
+      <div class="mastery-item" onclick="toggleMastery(this, 2)">
+        <div class="mastery-check"></div>
+        <div class="mastery-label">ファイルを探す</div>
+        <div class="mastery-desc">プロジェクト内のファイルやコードを検索</div>
+      </div>
+      <div class="mastery-item" onclick="toggleMastery(this, 3)">
+        <div class="mastery-check"></div>
+        <div class="mastery-label">Git コミットを作る</div>
+        <div class="mastery-desc">/commit コマンドを使ってみる</div>
+      </div>
+      <div class="mastery-item" onclick="toggleMastery(this, 4)">
+        <div class="mastery-check"></div>
+        <div class="mastery-label">PRを作成する</div>
+        <div class="mastery-desc">プルリクエストの作成を依頼</div>
+      </div>
+      <div class="mastery-item" onclick="toggleMastery(this, 5)">
+        <div class="mastery-check"></div>
+        <div class="mastery-label">Web検索を活用</div>
+        <div class="mastery-desc">最新の情報をWeb検索で取得</div>
+      </div>
+      <div class="mastery-item" onclick="toggleMastery(this, 6)">
+        <div class="mastery-check"></div>
+        <div class="mastery-label">CLAUDE.md を作る</div>
+        <div class="mastery-desc">プロジェクトの設定ファイルを作成</div>
+      </div>
+      <div class="mastery-item" onclick="toggleMastery(this, 7)">
+        <div class="mastery-check"></div>
+        <div class="mastery-label">/compact を使う</div>
+        <div class="mastery-desc">長い会話を圧縮してみる</div>
+      </div>
+      <div class="mastery-item" onclick="toggleMastery(this, 8)">
+        <div class="mastery-check"></div>
+        <div class="mastery-label">テストを書いてもらう</div>
+        <div class="mastery-desc">既存コードのテストを自動生成</div>
+      </div>
+      <div class="mastery-item" onclick="toggleMastery(this, 9)">
+        <div class="mastery-check"></div>
+        <div class="mastery-label">コードを解説してもらう</div>
+        <div class="mastery-desc">難しいコードの理解を深める</div>
+      </div>
+      <div class="mastery-item" onclick="toggleMastery(this, 10)">
+        <div class="mastery-check"></div>
+        <div class="mastery-label">リファクタリング</div>
+        <div class="mastery-desc">コードの品質改善を依頼</div>
+      </div>
+      <div class="mastery-item" onclick="toggleMastery(this, 11)">
+        <div class="mastery-check"></div>
+        <div class="mastery-label">全セクションを読む</div>
+        <div class="mastery-desc">このガイドの全カードを開いてみる</div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ── Footer ── -->
+<footer class="footer">
+  <p>
+    Built with Claude Code &mdash; Opus 4.6<br>
+    <span style="color: var(--text-muted); font-size: 12px;">
+      あなたの5xプランを最大限に活用しよう。
+    </span>
+  </p>
+</footer>
+
+<script>
+  // ── Card Toggle ──
+  function toggleCard(card) {
+    const wasOpen = card.classList.contains('open');
+    card.classList.toggle('open');
+
+    if (!wasOpen) {
+      const sectionId = card.closest('.section')?.id;
+      if (sectionId) trackView(sectionId);
+    }
+    updateProgress();
+  }
+
+  // ── Mastery Checklist ──
+  const STORAGE_KEY = 'claude-guide-mastery';
+
+  function loadMastery() {
+    try {
+      return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+    } catch { return {}; }
+  }
+
+  function saveMastery(data) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  }
+
+  function toggleMastery(el, index) {
+    const data = loadMastery();
+    const isChecked = !data[index];
+    data[index] = isChecked;
+    saveMastery(data);
+
+    el.classList.toggle('checked', isChecked);
+    el.querySelector('.mastery-check').innerHTML = isChecked ? '&#10003;' : '';
+    updateProgress();
+  }
+
+  function restoreMastery() {
+    const data = loadMastery();
+    const items = document.querySelectorAll('.mastery-item');
+    items.forEach((item, i) => {
+      if (data[i]) {
+        item.classList.add('checked');
+        item.querySelector('.mastery-check').innerHTML = '&#10003;';
+      }
+    });
+  }
+
+  // ── Progress Tracking ──
+  const VIEW_KEY = 'claude-guide-views';
+
+  function loadViews() {
+    try {
+      return JSON.parse(localStorage.getItem(VIEW_KEY)) || {};
+    } catch { return {}; }
+  }
+
+  function trackView(sectionId) {
+    const data = loadViews();
+    data[sectionId] = true;
+    localStorage.setItem(VIEW_KEY, JSON.stringify(data));
+    updateProgress();
+  }
+
+  function updateProgress() {
+    const masteryData = loadMastery();
+    const masteryCount = Object.values(masteryData).filter(Boolean).length;
+    const totalMastery = 12;
+
+    const viewData = loadViews();
+    const sections = ['sec-code', 'sec-file', 'sec-git', 'sec-search', 'sec-agent', 'sec-slash', 'sec-tips', 'sec-mastery'];
+    const viewCount = sections.filter(s => viewData[s]).length;
+    const totalViews = sections.length;
+
+    const totalItems = totalMastery + totalViews;
+    const completedItems = masteryCount + viewCount;
+    const percent = Math.round((completedItems / totalItems) * 100);
+
+    document.getElementById('progressBar').style.width = percent + '%';
+    document.getElementById('progressText').textContent = percent + '%';
+  }
+
+  // ── Header Scroll Effect ──
+  window.addEventListener('scroll', () => {
+    document.getElementById('header').classList.toggle('scrolled', window.scrollY > 20);
+  });
+
+  // ── Nav Pills ──
+  document.querySelectorAll('.nav-pill').forEach(pill => {
+    pill.addEventListener('click', () => {
+      document.querySelectorAll('.nav-pill').forEach(p => p.classList.remove('active'));
+      pill.classList.add('active');
+      const target = document.getElementById(pill.dataset.target);
+      if (target) {
+        target.scrollIntoView({ behavior: 'smooth' });
+        trackView(pill.dataset.target);
+      }
+    });
+  });
+
+  // ── Intersection Observer for Nav ──
+  const sectionObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const id = entry.target.id;
+        document.querySelectorAll('.nav-pill').forEach(p => {
+          p.classList.toggle('active', p.dataset.target === id);
+        });
+        trackView(id);
+      }
+    });
+  }, { threshold: 0.3, rootMargin: '-80px 0px 0px 0px' });
+
+  document.querySelectorAll('.section, #hero-section').forEach(sec => {
+    sectionObserver.observe(sec);
+  });
+
+  // ── Fade In Animation ──
+  const fadeObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+      }
+    });
+  }, { threshold: 0.1 });
+
+  document.querySelectorAll('.fade-in').forEach(el => fadeObserver.observe(el));
+
+  // ── Hero Typewriter ──
+  const commands = [
+    { cmd: 'claude', delay: 80 },
+    { output: '  Welcome to Claude Code! (Opus 4.6)', pause: 1200 },
+    { prompt: '> ', cmd: 'バグを修正して、テストも書いて', delay: 60 },
+    { output: '  &#9745; Bug fixed in src/auth.ts:42', pause: 600 },
+    { output: '  &#9745; Test added: auth.test.ts', pause: 600 },
+    { output: '  &#9745; All tests passing', pause: 1200 },
+    { prompt: '> ', cmd: 'この変更をコミットして', delay: 60 },
+    { output: '  &#9745; Committed: "fix: resolve auth token validation"', pause: 2000 },
+  ];
+
+  async function typewriter() {
+    const container = document.getElementById('heroTerminal');
+    const typeEl = document.getElementById('typewriter');
+    const cursorEl = document.getElementById('cursor');
+
+    for (const step of commands) {
+      if (step.cmd !== undefined) {
+        typeEl.textContent = '';
+        cursorEl.style.display = 'inline-block';
+        for (const char of step.cmd) {
+          typeEl.textContent += char;
+          await sleep(step.delay + Math.random() * 40);
+        }
+        cursorEl.style.display = 'none';
+        await sleep(step.pause || 400);
+
+        // Move current line to permanent and create new input line
+        const currentLine = typeEl.closest('.terminal-line');
+        if (currentLine) {
+          currentLine.innerHTML = `<span class="terminal-prompt">${step.prompt || '$ '}</span><span class="terminal-cmd">${step.cmd}</span>`;
+        }
+      }
+
+      if (step.output !== undefined) {
+        const outLine = document.createElement('div');
+        outLine.className = 'terminal-line';
+        outLine.innerHTML = `<span class="terminal-output">${step.output}</span>`;
+        container.appendChild(outLine);
+        await sleep(step.pause || 400);
+      }
+
+      if (step.cmd !== undefined && commands.indexOf(step) < commands.length - 1) {
+        // Prepare next input line
+        const nextStepIndex = commands.indexOf(step) + 1;
+        let hasMoreCmds = false;
+        for (let i = nextStepIndex; i < commands.length; i++) {
+          if (commands[i].cmd !== undefined) { hasMoreCmds = true; break; }
+        }
+        if (hasMoreCmds || commands[nextStepIndex]?.output !== undefined) {
+          // outputs will be appended, but next cmd needs new line
+        }
+        // Check if next step after outputs is a cmd
+        let nextCmd = null;
+        for (let i = nextStepIndex; i < commands.length; i++) {
+          if (commands[i].cmd !== undefined) {
+            nextCmd = commands[i];
+            break;
+          }
+        }
+      }
+    }
+
+    // Final blinking cursor
+    const finalLine = document.createElement('div');
+    finalLine.className = 'terminal-line';
+    finalLine.innerHTML = `<span class="terminal-prompt">&gt; </span><span class="terminal-cursor" style="display:inline-block"></span>`;
+    container.appendChild(finalLine);
+
+    // Loop after delay
+    await sleep(4000);
+    // Reset
+    container.innerHTML = `
+      <div class="terminal-line">
+        <span class="terminal-prompt">$ </span>
+        <span class="terminal-cmd" id="typewriter"></span>
+        <span class="terminal-cursor" id="cursor"></span>
+      </div>
+    `;
+    typewriter();
+  }
+
+  function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  // ── Init ──
+  document.addEventListener('DOMContentLoaded', () => {
+    restoreMastery();
+    updateProgress();
+    typewriter();
+  });
+</script>
+
+</body>
+</html>
